@@ -1,0 +1,270 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz Anglais / Français</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f2fb; min-height: 100vh; display: flex; justify-content: center; align-items: flex-start; padding: 2rem 1rem; }
+  #app { width: 100%; max-width: 680px; }
+  .header { text-align: center; margin-bottom: 1.5rem; }
+  .header h1 { font-size: 24px; font-weight: 600; color: #3C3489; }
+  .header p { font-size: 14px; color: #888; margin-top: 6px; }
+  .progress-bar-wrap { background: #e0ddf5; border-radius: 999px; height: 8px; margin-bottom: 0.5rem; overflow: hidden; }
+  .progress-bar { background: #534AB7; height: 8px; border-radius: 999px; transition: width 0.4s; }
+  .progress-label { font-size: 13px; color: #888; display: flex; justify-content: space-between; margin-bottom: 1rem; }
+  .group-badge { display: inline-block; background: #e8e6f8; color: #534AB7; font-size: 12px; padding: 3px 12px; border-radius: 8px; margin-bottom: 0.75rem; font-weight: 500; }
+  .question-card { background: #fff; border: 1px solid #e5e3f5; border-radius: 14px; padding: 1.5rem; margin-bottom: 1rem; box-shadow: 0 2px 8px rgba(83,74,183,0.07); }
+  .question-type { font-size: 11px; color: #aaa; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 8px; }
+  .question-text { font-size: 18px; font-weight: 600; color: #222; margin-bottom: 1.2rem; line-height: 1.5; }
+  .options { display: flex; flex-direction: column; gap: 10px; }
+  .option-btn { background: #f7f6fd; border: 1.5px solid #e0ddf5; border-radius: 10px; padding: 12px 16px; font-size: 15px; color: #333; cursor: pointer; text-align: left; transition: background 0.15s, border-color 0.15s; }
+  .option-btn:hover:not(:disabled) { background: #edeaf9; border-color: #534AB7; }
+  .option-btn.correct { background: #eaf7f0; border-color: #27ae60; color: #1a7a44; font-weight: 600; }
+  .option-btn.wrong { background: #fdf0f0; border-color: #e74c3c; color: #c0392b; font-weight: 600; }
+  .option-btn:disabled { cursor: default; }
+  .feedback { margin-top: 1rem; padding: 12px 16px; border-radius: 10px; font-size: 14px; line-height: 1.6; }
+  .feedback.correct { background: #eaf7f0; color: #1a7a44; border: 1px solid #b2dfcb; }
+  .feedback.wrong { background: #fdf0f0; color: #c0392b; border: 1px solid #f5c6c6; }
+  .next-btn { margin-top: 1rem; width: 100%; padding: 13px; background: #534AB7; color: #fff; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; letter-spacing: 0.02em; }
+  .next-btn:hover { background: #3C3489; }
+  .score-card { background: #fff; border: 1px solid #e5e3f5; border-radius: 16px; padding: 2.5rem; text-align: center; box-shadow: 0 2px 16px rgba(83,74,183,0.1); }
+  .score-big { font-size: 56px; font-weight: 700; color: #534AB7; }
+  .score-sub { font-size: 15px; color: #888; margin-top: 6px; }
+  .score-msg { font-size: 17px; margin-top: 1rem; color: #333; }
+  .continue-btn { margin-top: 1.5rem; padding: 13px 32px; background: #534AB7; color: #fff; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; }
+  .continue-btn:hover { background: #3C3489; }
+  .final-card { background: #fff; border: 1px solid #e5e3f5; border-radius: 16px; padding: 3rem 2rem; text-align: center; box-shadow: 0 2px 16px rgba(83,74,183,0.1); }
+  .stars { font-size: 40px; margin-bottom: 1rem; }
+  .restart-btn { margin-top: 1.5rem; padding: 13px 32px; background: #534AB7; color: #fff; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; }
+  .restart-btn:hover { background: #3C3489; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <h1>Quiz Anglais / Français</h1>
+    <p>100 questions · 5 groupes de 20 · Bonne chance !</p>
+  </div>
+  <div id="quiz-area"></div>
+</div>
+
+<script>
+const questions = [
+  {g:1,type:"FR→EN",q:"Comment dit-on 'Bonjour' en anglais ?",opts:["Hello","Goodbye","Sorry","Please"],a:0,exp:"'Bonjour' se traduit par 'Hello'. 'Goodbye' = Au revoir, 'Sorry' = Désolé, 'Please' = S'il vous plaît."},
+  {g:1,type:"EN→FR",q:"What does 'Thank you' mean in French?",opts:["S'il vous plaît","De rien","Merci","Excusez-moi"],a:2,exp:"'Thank you' signifie 'Merci'. 'S'il vous plaît' = Please, 'De rien' = You're welcome, 'Excusez-moi' = Excuse me."},
+  {g:1,type:"CHOIX",q:"Angelo goes to the market every ___.",opts:["morning","mornings","morningly","to morning"],a:0,exp:"On utilise 'morning' (sans 's') après 'every'. Ex: every morning, every day, every week."},
+  {g:1,type:"FR→EN",q:"Comment dit-on 'Je m'appelle...' en anglais ?",opts:["I have name...","My name is...","I am name...","Name me..."],a:1,exp:"La formule correcte est 'My name is...'. En anglais, on utilise 'my' pour exprimer la possession."},
+  {g:1,type:"EN→FR",q:"What does 'I am hungry' mean?",opts:["J'ai soif","Je suis fatigué","J'ai faim","Je suis malade"],a:2,exp:"'I am hungry' = 'J'ai faim'. Notez qu'en anglais on dit 'I am' mais en français on dit 'j'ai' (I have)."},
+  {g:1,type:"CHOIX",q:"Dion lives ___ France.",opts:["in","on","at","to"],a:0,exp:"On utilise 'in' pour les pays et villes. Ex: I live in France, in Paris, in Africa."},
+  {g:1,type:"FR→EN",q:"'L'eau' en anglais c'est ?",opts:["milk","juice","water","tea"],a:2,exp:"'L'eau' = 'water'. Un mot très important à connaître !"},
+  {g:1,type:"EN→FR",q:"What is the French word for 'house'?",opts:["École","Maison","Voiture","Jardin"],a:1,exp:"'House' = 'Maison'. 'École' = School, 'Voiture' = Car, 'Jardin' = Garden."},
+  {g:1,type:"CHOIX",q:"Naliali ___ studying English right now.",opts:["is","are","am","be"],a:0,exp:"Pour 'she/he/it' on utilise 'is'. Je = am, Tu/Vous/Ils = are, Il/Elle = is."},
+  {g:1,type:"FR→EN",q:"'Travail' se dit comment en anglais ?",opts:["Travel","Work","Walk","Talk"],a:1,exp:"'Travail' = 'Work'. Attention, 'Travel' = Voyage, un faux ami courant !"},
+  {g:1,type:"EN→FR",q:"What does 'open' mean?",opts:["Fermé","Gratuit","Ouvert","Propre"],a:2,exp:"'Open' = 'Ouvert'. 'Closed' = Fermé, 'Free' = Gratuit, 'Clean' = Propre."},
+  {g:1,type:"CHOIX",q:"Angelo ___ to the office yesterday.",opts:["went","go","goes","going"],a:0,exp:"'Went' est le passé irrégulier de 'go'. Au passé simple on utilise 'went' et non 'go'."},
+  {g:1,type:"FR→EN",q:"'Demain' en anglais ?",opts:["Yesterday","Today","Tomorrow","Later"],a:2,exp:"'Demain' = 'Tomorrow'. 'Hier' = Yesterday, 'Aujourd'hui' = Today."},
+  {g:1,type:"EN→FR",q:"'Can you help me please?' means?",opts:["Tu peux partir ?","Tu peux m'aider s'il te plaît ?","Où es-tu ?","Que veux-tu ?"],a:1,exp:"'Can you help me please?' = 'Tu peux m'aider s'il te plaît ?' 'Can' exprime la capacité ou la demande polie."},
+  {g:1,type:"CHOIX",q:"Dion has ___ apple on his desk.",opts:["a","an","the","–"],a:1,exp:"On utilise 'an' devant un mot qui commence par une voyelle (a, e, i, o, u). 'Apple' commence par 'a', donc 'an apple'."},
+  {g:1,type:"FR→EN",q:"'Je suis fatigué(e)' en anglais ?",opts:["I am sick","I am tired","I am bored","I am lost"],a:1,exp:"'Je suis fatigué(e)' = 'I am tired'. 'Sick' = malade, 'Bored' = ennuyé(e), 'Lost' = perdu(e)."},
+  {g:1,type:"EN→FR",q:"What does 'beautiful' mean?",opts:["Laid","Beau/Belle","Petit","Vieux"],a:1,exp:"'Beautiful' = 'Beau/Belle'. C'est un adjectif très commun pour décrire quelque chose de beau."},
+  {g:1,type:"CHOIX",q:"Angelo and his friend ___ playing football.",opts:["are","is","am","be"],a:0,exp:"Avec un sujet pluriel (Angelo and his friend = ils), on utilise 'are'. Am → I, Is → He/She/It, Are → You/We/They."},
+  {g:1,type:"FR→EN",q:"'S'il vous plaît' en anglais ?",opts:["Thanks","Sorry","Please","Excuse me"],a:2,exp:"'S'il vous plaît' = 'Please'. C'est un mot de politesse essentiel en anglais."},
+  {g:1,type:"EN→FR",q:"What is 'breakfast'?",opts:["Déjeuner","Goûter","Dîner","Petit-déjeuner"],a:3,exp:"'Breakfast' = 'Petit-déjeuner'. Lunch = Déjeuner, Dinner/Supper = Dîner."},
+
+  {g:2,type:"FR→EN",q:"'Où est la gare ?' en anglais ?",opts:["Where is the station?","What is the station?","Who is the station?","When is the station?"],a:0,exp:"'Où' = 'Where'. 'Where is...?' est la formule pour demander un lieu."},
+  {g:2,type:"EN→FR",q:"What does 'I need to buy some groceries' mean?",opts:["Je veux manger","J'ai besoin d'acheter des courses","Je veux sortir","J'ai besoin de dormir"],a:1,exp:"'I need' = 'j'ai besoin', 'to buy' = 'd'acheter', 'groceries' = 'courses/épicerie'."},
+  {g:2,type:"CHOIX",q:"Esther usually ___ tea in the morning.",opts:["drinks","drink","is drink","drinked"],a:0,exp:"Au présent simple avec he/she/it, on ajoute un 's' au verbe. 'She drinks' et non 'she drink'."},
+  {g:2,type:"FR→EN",q:"'Tournez à gauche' en anglais ?",opts:["Turn right","Go straight","Turn left","Come back"],a:2,exp:"'Tournez à gauche' = 'Turn left'. 'Left' = Gauche, 'Right' = Droite, 'Straight' = Tout droit."},
+  {g:2,type:"EN→FR",q:"What does 'How much does it cost?' mean?",opts:["C'est où ?","C'est combien ?","C'est quand ?","Qui paie ?"],a:1,exp:"'How much does it cost?' = 'C'est combien ?' Une phrase essentielle pour faire des achats."},
+  {g:2,type:"CHOIX",q:"Dion ___ been working here for two years.",opts:["has","have","had","is"],a:0,exp:"Avec 'he/she/it', le present perfect utilise 'has'. 'Has been' exprime une action qui a commencé dans le passé et continue."},
+  {g:2,type:"FR→EN",q:"'Pouvez-vous répéter s'il vous plaît ?' en anglais ?",opts:["Can you slow down?","Can you repeat that please?","Can you help me?","Can you stop?"],a:1,exp:"'Pouvez-vous répéter ?' = 'Can you repeat that please?' Très utile lors d'un test oral !"},
+  {g:2,type:"EN→FR",q:"What does 'I don't understand' mean?",opts:["Je ne sais pas","Je ne comprends pas","Je ne veux pas","Je n'entends pas"],a:1,exp:"'I don't understand' = 'Je ne comprends pas'. 'Don't' = ne...pas (négation pour I/you/we/they)."},
+  {g:2,type:"CHOIX",q:"Naliali is ___ than her colleague.",opts:["more taller","tallest","taller","the taller"],a:2,exp:"Pour comparer deux personnes, on ajoute '-er' aux adjectifs courts. 'Tall' → 'taller'. On ne dit pas 'more taller'."},
+  {g:2,type:"FR→EN",q:"'Je voudrais un café' en anglais ?",opts:["I want a coffee","I would like a coffee","Give me a coffee","I need a coffee"],a:1,exp:"'I would like' est plus poli que 'I want'. C'est la formule recommandée dans les restaurants et cafés."},
+  {g:2,type:"EN→FR",q:"What does 'busy' mean?",opts:["Libre","Occupé","Fatigué","Pressé"],a:1,exp:"'Busy' = 'Occupé'. 'I'm busy' = 'Je suis occupé(e)'. C'est un mot très fréquent au quotidien."},
+  {g:2,type:"CHOIX",q:"Angelo arrived ___ the airport at 10 AM.",opts:["in","on","at","by"],a:2,exp:"On utilise 'at' pour les lieux précis comme les gares, aéroports, etc. 'At the airport', 'at the station'."},
+  {g:2,type:"FR→EN",q:"'Combien de temps faut-il ?' en anglais ?",opts:["How far is it?","How much is it?","How long does it take?","How many times?"],a:2,exp:"'Combien de temps ?' = 'How long does it take?' Une question très utile pour les transports ou planifier."},
+  {g:2,type:"EN→FR",q:"What does 'appointment' mean?",opts:["Déception","Rendez-vous","Nomination","Emploi"],a:1,exp:"'Appointment' = 'Rendez-vous'. Ex: 'I have a doctor's appointment' = 'J'ai un rendez-vous chez le médecin'."},
+  {g:2,type:"CHOIX",q:"Esther and I ___ going to the market tomorrow.",opts:["is","am","are","be"],a:2,exp:"'Esther and I' = 'Nous', donc on utilise 'are'. C'est le futur proche (be going to)."},
+  {g:2,type:"FR→EN",q:"'Je ne sais pas' en anglais ?",opts:["I don't know","I don't want","I don't have","I don't care"],a:0,exp:"'Je ne sais pas' = 'I don't know'. C'est l'une des phrases les plus utilisées en anglais !"},
+  {g:2,type:"EN→FR",q:"What does 'late' mean?",opts:["Tôt","Dernier","En retard","Récent"],a:2,exp:"'Late' = 'En retard' (ou 'tard'). 'I'm late' = 'Je suis en retard'. 'Early' = Tôt/En avance."},
+  {g:2,type:"CHOIX",q:"Dion usually wakes up ___ 6 o'clock.",opts:["in","on","at","by"],a:2,exp:"On utilise 'at' pour les heures précises. 'At 6 o'clock', 'at noon', 'at midnight'."},
+  {g:2,type:"FR→EN",q:"'Il fait chaud aujourd'hui' en anglais ?",opts:["It is cold today","It is warm today","The sun is hot","Weather is good"],a:1,exp:"'Il fait chaud' = 'It is warm/hot'. Pour la météo en anglais, on utilise 'it is' ou 'it's'."},
+  {g:2,type:"EN→FR",q:"What does 'to save money' mean?",opts:["Gagner de l'argent","Dépenser de l'argent","Économiser de l'argent","Trouver de l'argent"],a:2,exp:"'To save money' = 'Économiser de l'argent'. 'To earn money' = Gagner, 'To spend money' = Dépenser."},
+
+  {g:3,type:"CHOIX",q:"Naliali ___ finish her report before the meeting.",opts:["must","musts","is must","mustn't"],a:0,exp:"'Must' est un auxiliaire modal, il ne prend jamais de 's'. 'She must' (et non 'she musts')."},
+  {g:3,type:"FR→EN",q:"'Je suis d'accord' en anglais ?",opts:["I agree","I disagree","I'm sure","I'm okay"],a:0,exp:"'Je suis d'accord' = 'I agree'. 'I disagree' = Je ne suis pas d'accord. 'I'm okay' = Ça va."},
+  {g:3,type:"EN→FR",q:"What does 'although' mean?",opts:["Parce que","Cependant","Bien que","Par conséquent"],a:2,exp:"'Although' = 'Bien que / Même si'. C'est une conjonction de concession. Ex: Although it's raining, we'll go out."},
+  {g:3,type:"CHOIX",q:"Angelo has lived in this city ___ five years.",opts:["for","since","ago","during"],a:0,exp:"'For' s'utilise avec une durée (five years, two months). 'Since' s'utilise avec un point précis dans le temps (since 2019)."},
+  {g:3,type:"FR→EN",q:"'Ça dépend' en anglais ?",opts:["It matters","It depends","It happens","It works"],a:1,exp:"'Ça dépend' = 'It depends'. On peut aussi dire 'It depends on...' suivi du contexte."},
+  {g:3,type:"EN→FR",q:"What does 'to look forward to something' mean?",opts:["Craindre quelque chose","Se souvenir de quelque chose","Attendre quelque chose avec impatience","Oublier quelque chose"],a:2,exp:"'To look forward to' = 'Attendre avec impatience'. Ex: I look forward to seeing you = J'ai hâte de te voir."},
+  {g:3,type:"CHOIX",q:"Esther will call you ___ she arrives.",opts:["when","while","since","until"],a:0,exp:"'When' s'utilise pour une action future ponctuelle. 'While' = pendant que, 'Since' = depuis, 'Until' = jusqu'à."},
+  {g:3,type:"FR→EN",q:"'Je suis pressé(e)' en anglais ?",opts:["I'm busy","I'm in a hurry","I'm tired","I'm late"],a:1,exp:"'Je suis pressé' = 'I'm in a hurry'. 'Hurry' = la hâte. On peut aussi dire 'I'm rushing'."},
+  {g:3,type:"EN→FR",q:"What does 'to make up your mind' mean?",opts:["Se maquiller","Se rappeler","Prendre une décision","Changer d'avis"],a:2,exp:"'To make up your mind' = 'Prendre une décision / Se décider'. Ex: I can't make up my mind = Je n'arrive pas à me décider."},
+  {g:3,type:"CHOIX",q:"Dion ___ have told us about the meeting!",opts:["should","shall","will","would"],a:0,exp:"'Should have + participe passé' exprime un reproche ou regret sur le passé. 'Il aurait dû nous dire.'"},
+  {g:3,type:"FR→EN",q:"'Peu importe' en anglais ?",opts:["No matter","Never mind","It's fine","Who cares"],a:1,exp:"'Peu importe / N'importe' = 'Never mind' ou 'It doesn't matter'. 'No matter' s'utilise devant un adverbe : no matter what."},
+  {g:3,type:"EN→FR",q:"What does 'salary' mean?",opts:["Épargne","Prime","Salaire","Revenu"],a:2,exp:"'Salary' = 'Salaire'. 'Savings' = Épargne, 'Bonus' = Prime, 'Income' = Revenu."},
+  {g:3,type:"CHOIX",q:"Angelo is the ___ student in the class.",opts:["most intelligent","more intelligent","intelligenter","most intelligenter"],a:0,exp:"Pour les adjectifs longs (+ 2 syllabes), le superlatif se forme avec 'the most + adjectif'. 'The most intelligent'."},
+  {g:3,type:"FR→EN",q:"'Autrement dit' en anglais ?",opts:["In other words","In addition","On the other hand","As a result"],a:0,exp:"'Autrement dit' = 'In other words'. C'est une formule de reformulation très utile à l'écrit et à l'oral."},
+  {g:3,type:"EN→FR",q:"What does 'however' mean?",opts:["Par conséquent","De plus","Cependant","Finalement"],a:2,exp:"'However' = 'Cependant / Toutefois'. C'est une conjonction d'opposition très fréquente à l'écrit."},
+  {g:3,type:"CHOIX",q:"Naliali asked me ___ I had finished the task.",opts:["if","that","what","which"],a:0,exp:"Dans le discours indirect avec une question oui/non, on utilise 'if' ou 'whether'. 'She asked if I had finished.'"},
+  {g:3,type:"FR→EN",q:"'Je suis en train de travailler' en anglais ?",opts:["I work","I am working","I was working","I have worked"],a:1,exp:"'Je suis en train de' = présent continu = 'I am + verbe-ing'. C'est une action en cours au moment où on parle."},
+  {g:3,type:"EN→FR",q:"What does 'deadline' mean?",opts:["Date de début","Heure limite","Date limite","Objectif"],a:2,exp:"'Deadline' = 'Date limite / Délai'. C'est un mot très courant dans le milieu professionnel."},
+  {g:3,type:"CHOIX",q:"Angelo ___ playing tennis when it started to rain.",opts:["was","is","were","has"],a:0,exp:"Le passé continu (past continuous) = 'was/were + verbe-ing'. Avec 'he', on utilise 'was'. 'He was playing'."},
+  {g:3,type:"FR→EN",q:"'À votre disposition' en anglais ?",opts:["At your service","At your disposal","For your information","Under your control"],a:1,exp:"'À votre disposition' = 'At your disposal'. Dans un email professionnel : 'I remain at your disposal.'"},
+
+  {g:4,type:"EN→FR",q:"What does 'to deal with' mean?",opts:["Éviter","Gérer / S'occuper de","Discuter","Découvrir"],a:1,exp:"'To deal with' = 'Gérer / S'occuper de'. Ex: 'I have to deal with this problem' = Je dois gérer ce problème."},
+  {g:4,type:"CHOIX",q:"Esther told me that she ___ come to the meeting.",opts:["wouldn't","won't","didn't","can't"],a:0,exp:"Dans le discours indirect au passé, 'will' devient 'would'. 'She said she would come' → 'wouldn't' pour la négation."},
+  {g:4,type:"FR→EN",q:"'D'une part... d'autre part' en anglais ?",opts:["However... therefore","On one hand... on the other hand","First... second","Although... besides"],a:1,exp:"'D'une part / D'autre part' = 'On one hand / On the other hand'. Structure de comparaison classique."},
+  {g:4,type:"EN→FR",q:"What does 'throughout' mean?",opts:["À travers / Tout au long de","Autour","En dehors de","Malgré"],a:0,exp:"'Throughout' = 'À travers / Tout au long de'. Ex: Throughout the year = Tout au long de l'année."},
+  {g:4,type:"CHOIX",q:"Dion wishes he ___ spoken better English at the interview.",opts:["had","has","would","could"],a:0,exp:"'I wish + had + participe passé' exprime un regret sur le passé. 'He wishes he had spoken better English.'"},
+  {g:4,type:"FR→EN",q:"'Les avantages et les inconvénients' en anglais ?",opts:["Pros and cons","Ups and downs","More and less","Plus and minus"],a:0,exp:"'Les avantages et inconvénients' = 'Pros and cons'. C'est une expression très fréquente en anglais."},
+  {g:4,type:"EN→FR",q:"What does 'to be in charge of' mean?",opts:["Se plaindre de","Être responsable de","Dépendre de","Se passer de"],a:1,exp:"'To be in charge of' = 'Être responsable de / Être chargé de'. Très courant dans le contexte professionnel."},
+  {g:4,type:"CHOIX",q:"Angelo had ___ the meeting before Naliali arrived.",opts:["left","leave","leaving","leaved"],a:0,exp:"Le plus-que-parfait (past perfect) = 'had + participe passé'. 'Left' est le participe passé irrégulier de 'leave'."},
+  {g:4,type:"FR→EN",q:"'Dorénavant / À partir de maintenant' en anglais ?",opts:["From now on","Until now","So far","Up to now"],a:0,exp:"'Dorénavant / À partir de maintenant' = 'From now on'. Ex: From now on, I will speak English every day."},
+  {g:4,type:"EN→FR",q:"What does 'to take for granted' mean?",opts:["Être reconnaissant","Ne pas apprécier à sa juste valeur","Prendre en compte","Obtenir gratuitement"],a:1,exp:"'To take for granted' = 'Tenir pour acquis / Ne pas apprécier'. Ex: Don't take your health for granted."},
+  {g:4,type:"CHOIX",q:"Esther is used to ___ early every morning.",opts:["waking up","wake up","woke up","waken up"],a:0,exp:"Après 'be used to' et 'get used to', on utilise toujours le gérondif (verbe + -ing). 'She is used to waking up early.'"},
+  {g:4,type:"FR→EN",q:"'C'est pourquoi / Voilà pourquoi' en anglais ?",opts:["That is why","This is how","Here is what","Which is why"],a:0,exp:"'C'est pourquoi' = 'That is why'. C'est une conjonction de conséquence très utile pour structurer un discours."},
+  {g:4,type:"EN→FR",q:"What does 'straightforward' mean?",opts:["Compliqué","Direct / Simple","Indirect","Formel"],a:1,exp:"'Straightforward' = 'Direct / Simple / Sans détour'. Ex: The explanation was straightforward = L'explication était claire."},
+  {g:4,type:"CHOIX",q:"Dion has ___ ten kilometers today.",opts:["run","ran","runned","running"],a:0,exp:"Au present perfect (has/have + participe passé), 'run' est irrégulier : run - ran - run. Le participe passé est 'run'."},
+  {g:4,type:"FR→EN",q:"'Sans aucun doute' en anglais ?",opts:["Without a doubt","No question","Certainly yes","Absolutely so"],a:0,exp:"'Sans aucun doute' = 'Without a doubt' ou 'Undoubtedly'. Ce sont des expressions de certitude très courantes."},
+  {g:4,type:"EN→FR",q:"What does 'to come across' mean?",opts:["Traverser","Tomber sur / Rencontrer par hasard","Revenir","Dépasser"],a:1,exp:"'To come across' = 'Tomber sur / Rencontrer par hasard'. Ex: I came across an old friend = Je suis tombé sur un vieil ami."},
+  {g:4,type:"CHOIX",q:"Angelo asked Naliali ___ she could help him.",opts:["whether","what","how","that"],a:0,exp:"'Whether' s'utilise comme 'if' dans les questions indirectes. 'He asked whether she could help him.'"},
+  {g:4,type:"FR→EN",q:"'En ce qui concerne' en anglais ?",opts:["Regarding / As for","In order to","Due to","According to"],a:0,exp:"'En ce qui concerne' = 'Regarding' ou 'As for' ou 'Concerning'. Très utile dans les emails professionnels."},
+  {g:4,type:"EN→FR",q:"What does 'overseas' mean?",opts:["En sous-sol","En plein air","À l'étranger","En haute mer"],a:2,exp:"'Overseas' = 'À l'étranger / Outre-mer'. Ex: He works overseas = Il travaille à l'étranger."},
+  {g:4,type:"CHOIX",q:"Esther will succeed ___ she works hard enough.",opts:["provided that","despite","even though","as long as"],a:3,exp:"'As long as' et 'provided that' expriment une condition. 'As long as' est plus courant. Les deux peuvent fonctionner ici."},
+
+  {g:5,type:"FR→EN",q:"'Néanmoins / Toutefois' en anglais ?",opts:["Nevertheless","Furthermore","Therefore","Meanwhile"],a:0,exp:"'Néanmoins' = 'Nevertheless' ou 'Nonetheless'. Ce sont des connecteurs de concession formels très utiles."},
+  {g:5,type:"EN→FR",q:"What does 'to put off' mean?",opts:["Éteindre","Remettre à plus tard","Mettre de côté","Refuser"],a:1,exp:"'To put off' = 'Reporter / Remettre à plus tard'. Ex: Don't put off what you can do today = Ne remets pas à demain ce que tu peux faire aujourd'hui."},
+  {g:5,type:"CHOIX",q:"Dion's project ___ be approved by the board next week.",opts:["will","would","might","should"],a:2,exp:"'Might' exprime une possibilité incertaine dans le futur. 'Will' est plus certain, 'should' exprime une attente."},
+  {g:5,type:"FR→EN",q:"'Dans l'ensemble' en anglais ?",opts:["Overall / On the whole","In the end","After all","By the way"],a:0,exp:"'Dans l'ensemble' = 'Overall' ou 'On the whole'. Ces expressions servent à faire un bilan général."},
+  {g:5,type:"EN→FR",q:"What does 'to run out of' mean?",opts:["Courir vers","Sortir en courant","Manquer de","Éviter"],a:2,exp:"'To run out of' = 'Manquer de / Épuiser'. Ex: We ran out of time = Nous avons manqué de temps."},
+  {g:5,type:"CHOIX",q:"Angelo suggested ___ to the new restaurant downtown.",opts:["going","to go","go","gone"],a:0,exp:"Après 'suggest', on utilise le gérondif (verbe + -ing). 'He suggested going' et non 'to go'. Règle à mémoriser !"},
+  {g:5,type:"FR→EN",q:"'Conformément à' en anglais ?",opts:["In accordance with","In addition to","In contrast to","In spite of"],a:0,exp:"'Conformément à' = 'In accordance with'. Très utilisé dans les textes officiels et professionnels."},
+  {g:5,type:"EN→FR",q:"What does 'to carry out' mean?",opts:["Porter","Effectuer / Mener à bien","Évacuer","Rejeter"],a:1,exp:"'To carry out' = 'Effectuer / Mener à bien / Réaliser'. Ex: to carry out a study = mener une étude."},
+  {g:5,type:"CHOIX",q:"Had Esther known about the delay, she ___ earlier.",opts:["would have left","would leave","had left","will have left"],a:0,exp:"C'est une conditionnelle 3 inversée. 'Had + sujet + participe → would have + participe'. Forme très formelle."},
+  {g:5,type:"FR→EN",q:"'Il va sans dire que' en anglais ?",opts:["It goes without saying that","It is known that","It seems obvious that","There is no doubt that"],a:0,exp:"'Il va sans dire que' = 'It goes without saying that'. Une expression idiomatique très courante."},
+  {g:5,type:"EN→FR",q:"What does 'to take into account' mean?",opts:["Prendre en compte","Ignorer","Mettre en avant","Remettre en question"],a:0,exp:"'To take into account' = 'Prendre en compte / Tenir compte de'. Syn: 'to take into consideration'."},
+  {g:5,type:"CHOIX",q:"Dion expressed his view ___ many people agreed.",opts:["even though","so that","because","therefore"],a:0,exp:"'Even though' = 'Bien que / Même si'. C'est une conjonction de concession. 'He expressed his view even though many agreed.'"},
+  {g:5,type:"FR→EN",q:"'À cet égard' en anglais ?",opts:["In this regard","In this way","For this reason","In this case"],a:0,exp:"'À cet égard' = 'In this regard'. Très utile pour faire référence à ce qui vient d'être dit."},
+  {g:5,type:"EN→FR",q:"What does 'widespread' mean?",opts:["Restreint","Très répandu","Approfondi","Détaillé"],a:1,exp:"'Widespread' = 'Très répandu / Généralisé'. Ex: widespread corruption = corruption généralisée."},
+  {g:5,type:"CHOIX",q:"Angelo ___ rather stay home than go to the party.",opts:["would","could","should","might"],a:0,exp:"'Would rather + base verbale' exprime une préférence. 'I would rather stay home' = Je préfère rester chez moi."},
+  {g:5,type:"FR→EN",q:"'Il est impératif que' en anglais ?",opts:["It is imperative that","It is important that","It is necessary to","It is essential to"],a:0,exp:"'Il est impératif que' = 'It is imperative that'. Après cette structure, on utilise souvent le subjonctif."},
+  {g:5,type:"EN→FR",q:"What does 'to come to an agreement' mean?",opts:["Entrer en désaccord","Parvenir à un accord","Proposer un accord","Refuser un accord"],a:1,exp:"'To come to an agreement' = 'Parvenir à un accord / Se mettre d'accord'. Syn: 'to reach an agreement'."},
+  {g:5,type:"CHOIX",q:"The results of Naliali's research ___ published last month.",opts:["were","was","have been","had been"],a:0,exp:"'Results' est pluriel, donc on utilise 'were'. C'est le passif au passé simple : 'were published' = ont été publiés."},
+  {g:5,type:"FR→EN",q:"'Toutes choses égales par ailleurs' en anglais ?",opts:["All things being equal","Everything considered","All in all","Taking everything into account"],a:0,exp:"'Toutes choses égales par ailleurs' = 'All things being equal'. Expression utilisée dans les analyses comparatives."},
+  {g:5,type:"EN→FR",q:"What does 'to be on the verge of' mean?",opts:["Être loin de","Être sur le point de","Être en train de","Être incapable de"],a:1,exp:"'To be on the verge of' = 'Être sur le point de'. Ex: He was on the verge of giving up = Il était sur le point d'abandonner."}
+];
+
+let current = 0;
+let groupScore = 0;
+let totalScore = 0;
+let answered = false;
+let groupStart = false;
+
+function groupOf(idx) { return Math.floor(idx / 20) + 1; }
+
+function render() {
+  const el = document.getElementById('quiz-area');
+  const idx = current;
+
+  if (idx >= questions.length) {
+    el.innerHTML = `
+      <div class="final-card">
+        <div class="stars">${totalScore >= 80 ? '🌟🌟🌟' : totalScore >= 60 ? '⭐⭐' : '⭐'}</div>
+        <div class="score-big">${totalScore} / 100</div>
+        <div class="score-sub">Score final — 100 questions terminées</div>
+        <div class="score-msg">${totalScore >= 80 ? 'Excellent travail ! Tu es prêt(e) pour ton test !' : totalScore >= 60 ? 'Bon résultat ! Continue à t\'entraîner.' : 'Continue à pratiquer, tu vas y arriver !'}</div>
+        <button class="restart-btn" onclick="restart()">Recommencer depuis le début</button>
+      </div>`;
+    return;
+  }
+
+  if (groupStart) {
+    const prevGroup = groupOf(idx - 1);
+    el.innerHTML = `
+      <div class="score-card">
+        <div class="score-big">${groupScore} / 20</div>
+        <div class="score-sub">Groupe ${prevGroup} terminé !</div>
+        <div class="score-msg">${groupScore >= 16 ? 'Excellent ! 🎉' : groupScore >= 12 ? 'Bien joué !' : 'Continue, tu progresses !'}</div>
+        <button class="continue-btn" onclick="startNextGroup()">Groupe suivant →</button>
+      </div>`;
+    return;
+  }
+
+  const q = questions[idx];
+  const grp = groupOf(idx);
+  const posInGroup = (idx % 20) + 1;
+  const pct = Math.round((idx / 100) * 100);
+
+  el.innerHTML = `
+    <div class="progress-bar-wrap"><div class="progress-bar" style="width:${pct}%"></div></div>
+    <div class="progress-label"><span>Groupe ${grp} · Question ${posInGroup}/20</span><span>Total : ${totalScore} pts</span></div>
+    <span class="group-badge">Groupe ${grp}</span>
+    <div class="question-card">
+      <div class="question-type">${q.type === 'FR→EN' ? '🇫🇷 Traduire en anglais' : q.type === 'EN→FR' ? '🇬🇧 Traduire en français' : '✏️ Choisir le bon mot'}</div>
+      <div class="question-text">${q.q}</div>
+      <div class="options" id="opts">
+        ${q.opts.map((o,i) => `<button class="option-btn" onclick="answer(${i})">${o}</button>`).join('')}
+      </div>
+      <div id="feedback"></div>
+    </div>
+    <button class="next-btn" id="next-btn" style="display:none" onclick="next()">Question suivante →</button>
+  `;
+}
+
+function answer(i) {
+  if (answered) return;
+  answered = true;
+  const q = questions[current];
+  const opts = document.querySelectorAll('.option-btn');
+  opts.forEach(b => b.disabled = true);
+  opts[q.a].classList.add('correct');
+  const fb = document.getElementById('feedback');
+  if (i === q.a) {
+    totalScore++;
+    groupScore++;
+    fb.className = 'feedback correct';
+    fb.innerHTML = '<strong>✓ Correct !</strong>';
+  } else {
+    opts[i].classList.add('wrong');
+    fb.className = 'feedback wrong';
+    fb.innerHTML = `<strong>✗ Incorrect.</strong> La bonne réponse est : <strong>${q.opts[q.a]}</strong><br><span style="font-size:13px">${q.exp}</span>`;
+  }
+  document.getElementById('next-btn').style.display = 'block';
+}
+
+function next() {
+  answered = false;
+  const prevGroup = groupOf(current);
+  current++;
+  if (current < questions.length && groupOf(current) !== prevGroup) {
+    groupStart = true;
+  } else {
+    groupStart = false;
+  }
+  render();
+}
+
+function startNextGroup() {
+  groupScore = 0;
+  groupStart = false;
+  render();
+}
+
+function restart() {
+  current = 0;
+  groupScore = 0;
+  totalScore = 0;
+  answered = false;
+  groupStart = false;
+  render();
+}
+
+render();
+</script>
+</body>
+</html>
